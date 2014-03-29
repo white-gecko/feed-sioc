@@ -56,6 +56,7 @@
     </xsl:template>
 
     <xsl:template match="/redirect/newLocation">
+        <!-- TODO set xml:base -->
         <rdf:RDF>
             <xsl:apply-templates mode="version" select="."/>
             <rdf:Description rdf:about="{$rss}">
@@ -65,22 +66,20 @@
     </xsl:template>
 
     <xsl:template match="/atom:feed|/atom1:feed">
-        <rdf:RDF>
+        <xsl:if test="atom1:link[@rel='alternate' and @type='text/html' and @href]">
+            <xsl:variable name="link" select="mf:normalize-slashs(atom1:link[@rel='alternate' and @type='text/html' and @href]/@href)" />
+            <xsl:variable name="feedBase" select="concat(substring($link, 1, string-length($link) - (substring($link, string-length($link))='/')), '/')" />
+        </xsl:if>
+<!--//
+        <xsl:if test="$rss='' and atom1:link[@rel='self' and @type!='text/html' and @href]">
+            <xsl:variable name="link" select="atom1:link[@rel='self' and @type!='text/html' and @href]/@href"/>
+            <xsl:variable name="feedBase" select="concat(substring($link, 1, string-length($link) - (substring($link, string-length($link))='/')), '/')" />
+        </xsl:if>
+//-->
+        <rdf:RDF xml:base="{$feedBase}">
             <xsl:copy-of select="@xml:lang|@xml:base"/>
             <xsl:apply-templates mode="version" select="."/>
-            <sioc:Forum rdf:about="">
-                <xsl:if test="atom1:link[@rel='alternate' and @type='text/html' and @href]">
-                    <xsl:attribute name="rdf:about">
-                        <xsl:value-of select="atom1:link[@rel='alternate' and @type='text/html' and @href]/@href"/>
-                    </xsl:attribute>
-                </xsl:if>
-<!--//
-                <xsl:if test="$rss='' and atom1:link[@rel='self' and @type!='text/html' and @href]">
-                    <xsl:attribute name="rdf:about">
-                        <xsl:value-of select="atom1:link[@rel='self' and @type!='text/html' and @href]/@href"/>
-                    </xsl:attribute>
-                </xsl:if>
-//-->
+            <sioc:Forum rdf:about="{$link}">
                 <xsl:apply-templates select="*"/>
                 <xsl:apply-templates select="@xml:lang"/>
                 <xsl:for-each select="atom:entry|atom1:entry">
@@ -151,6 +150,7 @@
         <sioc:Forum rdf:about="">
             <xsl:copy-of select="@*"/>
             <xsl:apply-templates mode="rss" select="node()|text()|comment()"/>
+            <xsl:variable name="feedBase" select="''" />
         </sioc:Forum>
     </xsl:template>
 
@@ -393,9 +393,11 @@
     </xsl:template>
 
     <xsl:template match="channel">
-        <rdf:RDF>
+        <xsl:variable name="link" select="link" />
+        <xsl:variable name="feedBase" select="concat(substring($link, 1, string-length($link) - (substring($link, string-length($link))='/')), '/')" />
+        <rdf:RDF xml:base="{$feedBase}">
             <xsl:apply-templates mode="version" select="."/>
-            <sioc:Forum rdf:about="{link}">
+            <sioc:Forum rdf:about="{$link}">
                 <xsl:apply-templates select="title|link|description|language|copyright|webMaster|webmaster|managingEditor|managingeditor|pubDate|pubdate|lastBuildDate|lastbuilddate|category[@domain='Syndic8']"/>
                 <xsl:copy-of select="dc:*|dcterms:*|syn:*"/>
                 <xsl:for-each select="item">
