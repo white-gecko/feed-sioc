@@ -74,12 +74,13 @@
                         <xsl:value-of select="atom1:link[@rel='alternate' and @type='text/html' and @href]/@href"/>
                     </xsl:attribute>
                 </xsl:if>
-<!--            <xsl:if test="$rss='' and atom1:link[@rel='self' and @type!='text/html' and @href]">
+<!--//
+                <xsl:if test="$rss='' and atom1:link[@rel='self' and @type!='text/html' and @href]">
                     <xsl:attribute name="rdf:about">
                         <xsl:value-of select="atom1:link[@rel='self' and @type!='text/html' and @href]/@href"/>
                     </xsl:attribute>
                 </xsl:if>
--->
+//-->
                 <xsl:apply-templates select="*"/>
                 <xsl:apply-templates select="@xml:lang"/>
                 <xsl:for-each select="atom:entry|atom1:entry">
@@ -102,11 +103,13 @@
 
     <xsl:template match="/rdf:RDF">
         <xsl:copy-of select="."/>
-<!--    <rdf:RDF>
-                <xsl:apply-templates mode="version" select="rss:channel|simple:channel"/>
-                <xsl:apply-templates mode="rss" select="*"/>
-                <xsl:apply-templates select="simple:*"/>
-        </rdf:RDF> -->
+<!--//
+        <rdf:RDF>
+            <xsl:apply-templates mode="version" select="rss:channel|simple:channel"/>
+            <xsl:apply-templates mode="rss" select="*"/>
+            <xsl:apply-templates select="simple:*"/>
+        </rdf:RDF>
+//-->
     </xsl:template>
 
     <xsl:template mode="version" match="rss:channel|channel|simple:channel|newLocation|atom:feed|atom1:feed">
@@ -164,11 +167,13 @@
 
     <xsl:template match="simple:channel">
         <sioc:Forum rdf:about="{simple:link}">
-<!--        <xsl:if test="simple:link[@href]">
-                    <xsl:attribute name="rdf:about">
-                            <xsl:value-of select="atom1:link[@rel='alternate' and @type='text/html' and @href]/@href"/>
-                    </xsl:attribute>
-            </xsl:if> -->
+<!--//
+            <xsl:if test="simple:link[@href]">
+                <xsl:attribute name="rdf:about">
+                    <xsl:value-of select="atom1:link[@rel='alternate' and @type='text/html' and @href]/@href"/>
+                </xsl:attribute>
+            </xsl:if>
+//-->
             <xsl:apply-templates select="simple:title|simple:description|simple:link"/>
             <xsl:for-each select="../simple:item[normalize-space(simple:link)!='']">
                 <sioc:container_of>
@@ -277,9 +282,11 @@
     </xsl:template>
 
     <xsl:template priority="1.0" match="atom:link[@rel='alternate' and @type='text/html']|atom1:link[@href and (@type='text/html' or count(@*)=1)]">
-        <!-- <sioc:link>
-                <xsl:value-of select="@href"/>
-        </sioc:link> -->
+<!--//
+        <sioc:link>
+            <xsl:value-of select="@href"/>
+        </sioc:link>
+//-->
         <sioc:link rdf:resource="{@href}"/>
     </xsl:template>
 
@@ -484,7 +491,9 @@
         <sioc:Post>
             <xsl:attribute name="rdf:about">
                 <xsl:value-of select="@rdf:about"/>
-<!--      <xsl:apply-templates mode="link" select="."/>-->
+<!--//
+                <xsl:apply-templates mode="link" select="."/>
+//-->
             </xsl:attribute>
             <xsl:apply-templates mode="rss"/>
         </sioc:Post>
