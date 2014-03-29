@@ -589,6 +589,30 @@
         </xsl:element>
     </xsl:template>
 
+    <xsl:template match="category[@domain='post_tag' and @nicename]">
+        <xsl:element name="dc:subject">
+            <xsl:value-of select="normalize-space(.)"/>
+        </xsl:element>
+
+        <xsl:element name="sioc:topic">
+            <skos:Concept about="tag/{@nicename}">
+                <rdfs:label><xsl:value-of select="normalize-space(.)"/></rdfs:label>
+            </skos:Concept>
+        </xsl:element>
+    </xsl:template>
+
+    <xsl:template match="category[@domain='category' and @nicename]">
+        <xsl:element name="dc:subject">
+            <xsl:value-of select="normalize-space(.)"/>
+        </xsl:element>
+
+        <xsl:element name="sioc:topic">
+            <skos:Concept about="category/{@nicename}">
+                <rdfs:label><xsl:value-of select="normalize-space(.)"/></rdfs:label>
+            </skos:Concept>
+        </xsl:element>
+    </xsl:template>
+
     <xsl:template match="category">
         <xsl:element name="dc:subject">
             <xsl:value-of select="normalize-space(.)"/>
