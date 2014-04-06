@@ -10,6 +10,7 @@
 
         # All RDF formats, including RSS 1.0, is output verbatim
 
+        # (c) 2014 Natanael Arndt
         # (c) 2006 Uldis Bojars (SIOC version)
         # (c) 2002-2006 Morten Frederiksen (Feed-RSS1.0-1.6.xsl)
         #     http://purl.org/net/syndication/subscribe/feed-rss1.0-1.6.xsl
@@ -35,8 +36,10 @@
     xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#"
     xmlns:enc="http://purl.oclc.org/net/rss_2.0/enc#"
     xmlns:sioc="http://rdfs.org/sioc/ns#"
+    xmlns:mf="http://www.example.org/myFunction/"
     exclude-result-prefixes="simple atom icbm"
-    version="1.0">
+    version="2.0">
+    <xsl:include href="functions.xsl" />
     <xsl:output
         indent="yes"
         omit-xml-declaration="yes"
@@ -66,16 +69,8 @@
     </xsl:template>
 
     <xsl:template match="/atom:feed|/atom1:feed">
-        <xsl:if test="atom1:link[@rel='alternate' and @type='text/html' and @href]">
-            <xsl:variable name="link" select="mf:normalize-slashs(atom1:link[@rel='alternate' and @type='text/html' and @href]/@href)" />
-            <xsl:variable name="feedBase" select="concat(substring($link, 1, string-length($link) - (substring($link, string-length($link))='/')), '/')" />
-        </xsl:if>
-<!--//
-        <xsl:if test="$rss='' and atom1:link[@rel='self' and @type!='text/html' and @href]">
-            <xsl:variable name="link" select="atom1:link[@rel='self' and @type!='text/html' and @href]/@href"/>
-            <xsl:variable name="feedBase" select="concat(substring($link, 1, string-length($link) - (substring($link, string-length($link))='/')), '/')" />
-        </xsl:if>
-//-->
+        <xsl:variable name="link" select="atom1:link[@rel='alternate' and @type='text/html' and @href]/@href" />
+        <xsl:variable name="feedBase" select="mf:normalize-slashs($link)" />
         <rdf:RDF xml:base="{$feedBase}">
             <xsl:copy-of select="@xml:lang|@xml:base"/>
             <xsl:apply-templates mode="version" select="."/>
@@ -150,7 +145,6 @@
         <sioc:Forum rdf:about="">
             <xsl:copy-of select="@*"/>
             <xsl:apply-templates mode="rss" select="node()|text()|comment()"/>
-            <xsl:variable name="feedBase" select="''" />
         </sioc:Forum>
     </xsl:template>
 
@@ -394,7 +388,7 @@
 
     <xsl:template match="channel">
         <xsl:variable name="link" select="link" />
-        <xsl:variable name="feedBase" select="concat(substring($link, 1, string-length($link) - (substring($link, string-length($link))='/')), '/')" />
+        <xsl:variable name="feedBase" select="mf:normalize-slashs($link)" />
         <rdf:RDF xml:base="{$feedBase}">
             <xsl:apply-templates mode="version" select="."/>
             <sioc:Forum rdf:about="{$link}">
@@ -695,10 +689,10 @@
                         <xsl:variable name="hisz" select="normalize-space(substring-after($yhisz,' '))"/>
                         <xsl:variable name="y">
                             <xsl:choose>
-                                <xsl:when test="string-length(translate($y-temp,'0123456789',''))=0 and string-length($y-temp)=2 and $y-temp &lt; 70">
+                                <xsl:when test="string-length(translate($y-temp,'0123456789',''))=0 and string-length($y-temp)=2 and number($y-temp) &lt; 70">
                                     <xsl:value-of select="concat('20',$y-temp)"/>
                                 </xsl:when>
-                                <xsl:when test="string-length(translate($y-temp,'0123456789',''))=0 and string-length($y-temp)=2 and $y-temp &gt;= 70">
+                                <xsl:when test="string-length(translate($y-temp,'0123456789',''))=0 and string-length($y-temp)=2 and number($y-temp) &gt;= 70">
                                     <xsl:value-of select="concat('19',$y-temp)"/>
                                 </xsl:when>
                                 <xsl:when test="string-length(translate($y-temp,'0123456789',''))=0 and string-length($y-temp)=4">
@@ -724,7 +718,7 @@
                             <xsl:choose>
                                 <xsl:when test="string-length($his)=8 and string-length(translate($his,'0123456789',''))=2 and string-length(translate($his,':',''))=6 and string-length($offset)!=0">
                                     <xsl:element name="{$name}">
-                                        <xsl:value-of select="concat($y,'-',format-number($m,'00'),'-',format-number($d,'00'),'T',$his,$offset)"/>
+                                        <xsl:value-of select="concat($y,'-',format-number($m,'00'),'-',format-number(number($d),'00'),'T',$his,$offset)"/>
                                     </xsl:element>
                                 </xsl:when>
                                 <xsl:otherwise>
