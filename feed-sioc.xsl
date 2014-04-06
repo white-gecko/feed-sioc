@@ -36,6 +36,9 @@
     xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#"
     xmlns:enc="http://purl.oclc.org/net/rss_2.0/enc#"
     xmlns:sioc="http://rdfs.org/sioc/ns#"
+    xmlns:ctag="http://commontag.org/ns#"
+    xmlns:wp10="http://wordpress.org/export/1.0/"
+    xmlns:wp12="http://wordpress.org/export/1.2/"
     xmlns:mf="http://www.example.org/myFunction/"
     exclude-result-prefixes="simple atom icbm"
     version="2.0">
@@ -49,6 +52,8 @@
         stylesheet-prefix="rss"/>
 
     <xsl:param name="rss"/>
+    <xsl:param name="wp_drafts"/>
+    <xsl:param name="wp_attachments"/>
 
     <xsl:template match="/">
         <xsl:apply-templates select="/rdf:RDF"/>
@@ -106,6 +111,7 @@
 //-->
     </xsl:template>
 
+    <!-- Add a comment telling the source format -->
     <xsl:template mode="version" match="rss:channel|channel|simple:channel|newLocation|atom:feed|atom1:feed">
         <xsl:comment>
             <xsl:value-of select="' version=&quot;'"/>
@@ -391,6 +397,7 @@
         <xsl:variable name="feedBase" select="mf:normalize-slashs($link)" />
         <rdf:RDF xml:base="{$feedBase}">
             <xsl:apply-templates mode="version" select="."/>
+            <xsl:apply-templates select="wp12:category"/>
             <sioc:Forum rdf:about="{$link}">
                 <xsl:apply-templates select="title|link|description|language|copyright|webMaster|webmaster|managingEditor|managingeditor|pubDate|pubdate|lastBuildDate|lastbuilddate|category[@domain='Syndic8']"/>
                 <xsl:copy-of select="dc:*|dcterms:*|syn:*"/>
@@ -414,6 +421,66 @@
             </sioc:Forum>
             <xsl:apply-templates select="item|image[normalize-space(url)!='']|textinput[normalize-space(link)!='']"/>
         </rdf:RDF>
+    </xsl:template>
+
+    <xsl:template match="item[.//wp12:post_type='post']">
+        <xsl:if test="not ($wp_drafts = 'no' and (wp12:status = 'draft' or wp12:status = 'pending'))">
+            <sioc:Post>
+                <xsl:attribute name="rdf:about">
+                    <xsl:apply-templates mode="link" select="."/>
+                </xsl:attribute>
+                <xsl:apply-templates select="icbm:latitude|icbm:longitude|link|title|description|language|category|pubDate|pubdate|lastBuildDate|lastbuilddate"/>
+                <xsl:if test="not(link) and normalize-space(guid[not(@isPermaLink='false')])!=''">
+                    <sioc:link>
+                        <xsl:value-of select="guid[not(@isPermaLink='false')]"/>
+                    </sioc:link>
+                </xsl:if>
+                <xsl:if test="not(title)">
+                    <dc:title/>
+                </xsl:if>
+                <xsl:copy-of select="dc:*|dcterms:*|content:*"/>
+            </sioc:Post>
+        </xsl:if>
+    </xsl:template>
+
+    <xsl:template match="item[.//wp12:post_type='attachment']">
+        <xsl:if test="not ($wp_drafts = 'no' and (wp12:status = 'draft' or wp12:status = 'pending')) and not ($wp_attachments = 'no')">
+            <sioc:Post>
+                <xsl:attribute name="rdf:about">
+                    <xsl:apply-templates mode="link" select="."/>
+                </xsl:attribute>
+                <xsl:apply-templates select="icbm:latitude|icbm:longitude|link|title|description|language|category|pubDate|pubdate|lastBuildDate|lastbuilddate"/>
+                <xsl:if test="not(link) and normalize-space(guid[not(@isPermaLink='false')])!=''">
+                    <sioc:link>
+                        <xsl:value-of select="guid[not(@isPermaLink='false')]"/>
+                    </sioc:link>
+                </xsl:if>
+                <xsl:if test="not(title)">
+                    <dc:title/>
+                </xsl:if>
+                <xsl:copy-of select="dc:*|dcterms:*|content:*"/>
+            </sioc:Post>
+        </xsl:if>
+    </xsl:template>
+
+    <xsl:template match="item[.//wp12:post_type='page']">
+        <xsl:if test="not ($wp_drafts = 'no' and (wp12:status = 'draft' or wp12:status = 'pending'))">
+            <foaf:Document>
+                <xsl:attribute name="rdf:about">
+                    <xsl:apply-templates mode="link" select="."/>
+                </xsl:attribute>
+                <xsl:apply-templates select="icbm:latitude|icbm:longitude|link|title|description|language|category|pubDate|pubdate|lastBuildDate|lastbuilddate"/>
+                <xsl:if test="not(link) and normalize-space(guid[not(@isPermaLink='false')])!=''">
+                    <sioc:link>
+                        <xsl:value-of select="guid[not(@isPermaLink='false')]"/>
+                    </sioc:link>
+                </xsl:if>
+                <xsl:if test="not(title)">
+                    <dc:title/>
+                </xsl:if>
+                <xsl:copy-of select="dc:*|dcterms:*|content:*"/>
+            </foaf:Document>
+        </xsl:if>
     </xsl:template>
 
     <xsl:template match="item">
@@ -584,27 +651,28 @@
     </xsl:template>
 
     <xsl:template match="category[@domain='post_tag' and @nicename]">
-        <xsl:element name="dc:subject">
-            <xsl:value-of select="normalize-space(.)"/>
-        </xsl:element>
-
-        <xsl:element name="sioc:topic">
-            <skos:Concept about="tag/{@nicename}">
+        <xsl:element name="ctag:tagged">
+            <ctag:AuthorTag about="tag/{@nicename}">
                 <rdfs:label><xsl:value-of select="normalize-space(.)"/></rdfs:label>
-            </skos:Concept>
+            </ctag:AuthorTag>
         </xsl:element>
     </xsl:template>
 
     <xsl:template match="category[@domain='category' and @nicename]">
-        <xsl:element name="dc:subject">
-            <xsl:value-of select="normalize-space(.)"/>
-        </xsl:element>
-
-        <xsl:element name="sioc:topic">
-            <skos:Concept about="category/{@nicename}">
+        <xsl:element name="sioc:has_container">
+            <sioc:Container about="category/{@nicename}" >
                 <rdfs:label><xsl:value-of select="normalize-space(.)"/></rdfs:label>
-            </skos:Concept>
+            </sioc:Container>
         </xsl:element>
+    </xsl:template>
+
+    <xsl:template match="wp12:category">
+        <sioc:Container about="category/{wp12:category_nicename}">
+            <rdfs:label><xsl:value-of select="normalize-space(wp12:cat_name)"/></rdfs:label>
+            <xsl:if test="wp12:category_parent != ''">
+                <sioc:has_parent><sioc:Container about="category/{wp12:category_parent}" /></sioc:has_parent>
+            </xsl:if>
+        </sioc:Container>
     </xsl:template>
 
     <xsl:template match="category">
