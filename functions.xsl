@@ -12,4 +12,8 @@
             </xsl:otherwise>
         </xsl:choose>
     </xsl:function>
+    <xsl:function name="mf:nameToUri" as="xs:string">
+        <xsl:param name="name"/>
+        <xsl:value-of select="replace(replace(replace(replace(replace($name,' ',''),'ß','ss'),'ü','ue'),'ä','ae'),'ö','oe')" />
+    </xsl:function>
 </xsl:stylesheet>

@@ -493,7 +493,7 @@
             <xsl:attribute name="rdf:about">
                 <xsl:apply-templates mode="link" select="."/>
             </xsl:attribute>
-            <xsl:apply-templates select="icbm:latitude|icbm:longitude|link|title|description|language|category|pubDate|pubdate|lastBuildDate|lastbuilddate"/>
+            <xsl:apply-templates select="icbm:latitude|icbm:longitude|link|title|description|language|category|pubDate|pubdate|lastBuildDate|lastbuilddate|dc:creator"/>
             <xsl:if test="not(link) and normalize-space(guid[not(@isPermaLink='false')])!=''">
                 <sioc:link>
                     <xsl:value-of select="guid[not(@isPermaLink='false')]"/>
@@ -502,7 +502,7 @@
             <xsl:if test="not(title)">
                 <dc:title/>
             </xsl:if>
-            <xsl:copy-of select="dc:*|dcterms:*|content:*"/>
+            <xsl:copy-of select="dc:*[not('creator')]|dcterms:*|content:*"/>
         </sioct:BlogPost>
     </xsl:template>
 
@@ -521,6 +521,16 @@
     <xsl:template mode="rss" match="dc:creator">
         <foaf:maker>
             <foaf:Person>
+                <foaf:name>
+                    <xsl:value-of select="."/>
+                </foaf:name>
+            </foaf:Person>
+        </foaf:maker>
+    </xsl:template>
+
+    <xsl:template match="dc:creator">
+        <foaf:maker>
+            <foaf:Person about="{mf:nameToUri(.)}">
                 <foaf:name>
                     <xsl:value-of select="."/>
                 </foaf:name>
@@ -655,11 +665,16 @@
         </xsl:element>
     </xsl:template>
 
-    <xsl:template match="category[@domain='post_tag' and @nicename]">
+    <xsl:template match="category[(@domain='post_tag' or @domain='tag') and @nicename]">
         <xsl:element name="ctag:tagged">
-            <ctag:AuthorTag about="tag/{@nicename}">
+            <ctag:Tag about="tag/{@nicename}">
                 <rdfs:label><xsl:value-of select="normalize-space(.)"/></rdfs:label>
-            </ctag:AuthorTag>
+            </ctag:Tag>
+        </xsl:element>
+        <xsl:element name="sioc:topic">
+            <ctag:Tag about="tag/{@nicename}">
+                <rdfs:label><xsl:value-of select="normalize-space(.)"/></rdfs:label>
+            </ctag:Tag>
         </xsl:element>
     </xsl:template>
 
@@ -668,6 +683,11 @@
             <sioc:Container about="category/{@nicename}" >
                 <rdfs:label><xsl:value-of select="normalize-space(.)"/></rdfs:label>
             </sioc:Container>
+        </xsl:element>
+        <xsl:element name="sioc:topic">
+            <skos:Concept about="category/{@nicename}" >
+                <rdfs:label><xsl:value-of select="normalize-space(.)"/></rdfs:label>
+            </skos:Concept>
         </xsl:element>
     </xsl:template>
 
@@ -680,6 +700,7 @@
         </sioc:Container>
     </xsl:template>
 
+    <!--// we don't want this for wordpress to avoid duplicates
     <xsl:template match="category">
         <xsl:element name="dc:subject">
             <xsl:value-of select="normalize-space(.)"/>
@@ -691,6 +712,7 @@
             </skos:Concept>
         </xsl:element>
     </xsl:template>
+    //-->
 
     <xsl:template match="pubDate|pubdate">
         <xsl:apply-templates mode="rfc2822-w3cdtf" select=".">
