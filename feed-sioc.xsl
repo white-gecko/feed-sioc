@@ -18,27 +18,32 @@
         # License: http://www.gnu.org/licenses/gpl
 -->
 <xsl:transform
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+
     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-    xmlns:simple="http://my.netscape.com/rdf/simple/0.9/"
-    xmlns:rss="http://purl.org/rss/1.0/"
+    xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
     xmlns:dc="http://purl.org/dc/elements/1.1/"
     xmlns:dcterms="http://purl.org/dc/terms/"
-    xmlns:content="http://purl.org/rss/1.0/modules/content/"
-    xmlns:syn="http://purl.org/rss/1.0/modules/syndication/"
-    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-    xmlns:atom="http://purl.org/atom/ns#"
-    xmlns:atom1="http://www.w3.org/2005/Atom"
     xmlns:foaf="http://xmlns.com/foaf/0.1/"
-    xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+    xmlns:sioc="http://rdfs.org/sioc/ns#"
+    xmlns:sioct="http://rdfs.org/sioc/types#"
+    xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+    xmlns:ctag="http://commontag.org/ns#"
+    xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#"
+
+    xmlns:enc="http://purl.oclc.org/net/rss_2.0/enc#"
+    xmlns:syn="http://purl.org/rss/1.0/modules/syndication/"
+    xmlns:content="http://purl.org/rss/1.0/modules/content/"
     xmlns:admin="http://webns.net/mvcb/"
     xmlns:icbm="http://postneo.com/icbm"
-    xmlns:skos="http://www.w3.org/2004/02/skos/core#"
-    xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#"
-    xmlns:enc="http://purl.oclc.org/net/rss_2.0/enc#"
-    xmlns:sioc="http://rdfs.org/sioc/ns#"
-    xmlns:ctag="http://commontag.org/ns#"
+
+    xmlns:rss="http://purl.org/rss/1.0/"
+    xmlns:atom="http://purl.org/atom/ns#"
+    xmlns:atom1="http://www.w3.org/2005/Atom"
+    xmlns:simple="http://my.netscape.com/rdf/simple/0.9/"
     xmlns:wp10="http://wordpress.org/export/1.0/"
     xmlns:wp12="http://wordpress.org/export/1.2/"
+
     xmlns:mf="http://www.example.org/myFunction/"
     exclude-result-prefixes="simple atom icbm"
     version="2.0">
@@ -79,25 +84,25 @@
         <rdf:RDF xml:base="{$feedBase}">
             <xsl:copy-of select="@xml:lang|@xml:base"/>
             <xsl:apply-templates mode="version" select="."/>
-            <sioc:Forum rdf:about="{$link}">
+            <sioct:Weblog rdf:about="{$link}">
                 <xsl:apply-templates select="*"/>
                 <xsl:apply-templates select="@xml:lang"/>
                 <xsl:for-each select="atom:entry|atom1:entry">
                     <sioc:container_of>
-                        <sioc:Post rdf:about="{atom:link[@rel='alternate']/@href}{atom1:id}"/>
+                        <sioct:BlogPost rdf:about="{atom:link[@rel='alternate']/@href}{atom1:id}"/>
                     </sioc:container_of>
                 </xsl:for-each>
-            </sioc:Forum>
+            </sioct:Weblog>
             <xsl:apply-templates mode="item" select="atom:entry|atom1:entry"/>
         </rdf:RDF>
     </xsl:template>
 
     <xsl:template mode="item" match="atom:entry|atom1:entry">
-        <sioc:Post rdf:about="{atom:link[@rel='alternate']/@href}{atom1:id}">
+        <sioct:BlogPost rdf:about="{atom:link[@rel='alternate']/@href}{atom1:id}">
             <xsl:copy-of select="@xml:lang|@xml:base"/>
             <xsl:apply-templates select="*"/>
             <xsl:apply-templates select="@xml:lang"/>
-        </sioc:Post>
+        </sioct:BlogPost>
     </xsl:template>
 
     <xsl:template match="/rdf:RDF">
@@ -148,10 +153,10 @@
     </xsl:template>
 
     <xsl:template mode="rss" match="rss:channel">
-        <sioc:Forum rdf:about="">
+        <sioct:Weblog rdf:about="">
             <xsl:copy-of select="@*"/>
             <xsl:apply-templates mode="rss" select="node()|text()|comment()"/>
-        </sioc:Forum>
+        </sioct:Weblog>
     </xsl:template>
 
     <xsl:template mode="rss" match="*">
@@ -162,11 +167,11 @@
     </xsl:template>
 
     <xsl:template mode="rss" match="rdf:li">
-        <sioc:Post rdf:about="{concat(@resource,@rdf:resource)}"/>
+        <sioct:BlogPost rdf:about="{concat(@resource,@rdf:resource)}"/>
     </xsl:template>
 
     <xsl:template match="simple:channel">
-        <sioc:Forum rdf:about="{simple:link}">
+        <sioct:Weblog rdf:about="{simple:link}">
 <!--//
             <xsl:if test="simple:link[@href]">
                 <xsl:attribute name="rdf:about">
@@ -178,7 +183,7 @@
             <xsl:for-each select="../simple:item[normalize-space(simple:link)!='']">
                 <sioc:container_of>
 
-                    <sioc:Post rdf:about="{simple:link}"/>
+                    <sioct:BlogPost rdf:about="{simple:link}"/>
                 </sioc:container_of>
 
             </xsl:for-each>
@@ -188,14 +193,14 @@
             <xsl:if test="../simple:textinput[normalize-space(simple:link)!='']">
                 <rss:textinput rdf:resource="{../simple:textinput[normalize-space(simple:link)!=''][1]/simple:link}"/>
             </xsl:if>
-        </sioc:Forum>
+        </sioct:Weblog>
     </xsl:template>
 
     <xsl:template match="simple:item">
         <xsl:if test="normalize-space(simple:link)!=''">
-            <sioc:Post rdf:about="{simple:link}">
+            <sioct:BlogPost rdf:about="{simple:link}">
                 <xsl:apply-templates select="simple:title|simple:description|simple:link"/>
-            </sioc:Post>
+            </sioct:BlogPost>
         </xsl:if>
     </xsl:template>
 
@@ -398,17 +403,17 @@
         <rdf:RDF xml:base="{$feedBase}">
             <xsl:apply-templates mode="version" select="."/>
             <xsl:apply-templates select="wp12:category"/>
-            <sioc:Forum rdf:about="{$link}">
+            <sioct:Weblog rdf:about="{$link}">
                 <xsl:apply-templates select="title|link|description|language|copyright|webMaster|webmaster|managingEditor|managingeditor|pubDate|pubdate|lastBuildDate|lastbuilddate|category[@domain='Syndic8']"/>
                 <xsl:copy-of select="dc:*|dcterms:*|syn:*"/>
                 <xsl:for-each select="item">
                     <sioc:container_of>
 
-                        <sioc:Post>
+                        <sioct:BlogPost>
                             <xsl:attribute name="rdf:about">
                                 <xsl:apply-templates mode="link" select="."/>
                             </xsl:attribute>
-                        </sioc:Post>
+                        </sioct:BlogPost>
                     </sioc:container_of>
 
                 </xsl:for-each>
@@ -418,14 +423,14 @@
                 <xsl:if test="textinput[normalize-space(link)!='']">
                     <rss:textinput rdf:resource="{textinput[normalize-space(link)!=''][1]/link}"/>
                 </xsl:if>
-            </sioc:Forum>
+            </sioct:Weblog>
             <xsl:apply-templates select="item|image[normalize-space(url)!='']|textinput[normalize-space(link)!='']"/>
         </rdf:RDF>
     </xsl:template>
 
     <xsl:template match="item[.//wp12:post_type='post']">
         <xsl:if test="not ($wp_drafts = 'no' and (wp12:status = 'draft' or wp12:status = 'pending'))">
-            <sioc:Post>
+            <sioct:BlogPost>
                 <xsl:attribute name="rdf:about">
                     <xsl:apply-templates mode="link" select="."/>
                 </xsl:attribute>
@@ -439,13 +444,13 @@
                     <dc:title/>
                 </xsl:if>
                 <xsl:copy-of select="dc:*|dcterms:*|content:*"/>
-            </sioc:Post>
+            </sioct:BlogPost>
         </xsl:if>
     </xsl:template>
 
     <xsl:template match="item[.//wp12:post_type='attachment']">
         <xsl:if test="not ($wp_drafts = 'no' and (wp12:status = 'draft' or wp12:status = 'pending')) and not ($wp_attachments = 'no')">
-            <sioc:Post>
+            <sioct:BlogPost>
                 <xsl:attribute name="rdf:about">
                     <xsl:apply-templates mode="link" select="."/>
                 </xsl:attribute>
@@ -459,7 +464,7 @@
                     <dc:title/>
                 </xsl:if>
                 <xsl:copy-of select="dc:*|dcterms:*|content:*"/>
-            </sioc:Post>
+            </sioct:BlogPost>
         </xsl:if>
     </xsl:template>
 
@@ -484,7 +489,7 @@
     </xsl:template>
 
     <xsl:template match="item">
-        <sioc:Post>
+        <sioct:BlogPost>
             <xsl:attribute name="rdf:about">
                 <xsl:apply-templates mode="link" select="."/>
             </xsl:attribute>
@@ -498,17 +503,17 @@
                 <dc:title/>
             </xsl:if>
             <xsl:copy-of select="dc:*|dcterms:*|content:*"/>
-        </sioc:Post>
+        </sioct:BlogPost>
     </xsl:template>
 
     <xsl:template mode="rss" match="rss:items">
         <xsl:for-each select="rdf:Seq/rdf:li">
             <sioc:container_of>
-                <sioc:Post>
+                <sioct:BlogPost>
                     <xsl:attribute name="rdf:about">
                         <xsl:value-of select="@rdf:resource"/>
                     </xsl:attribute>
-                </sioc:Post>
+                </sioct:BlogPost>
             </sioc:container_of>
         </xsl:for-each>
     </xsl:template>
@@ -551,7 +556,7 @@
 
 
     <xsl:template mode="rss" match="rss:item">
-        <sioc:Post>
+        <sioct:BlogPost>
             <xsl:attribute name="rdf:about">
                 <xsl:value-of select="@rdf:about"/>
 <!--//
@@ -559,7 +564,7 @@
 //-->
             </xsl:attribute>
             <xsl:apply-templates mode="rss"/>
-        </sioc:Post>
+        </sioct:BlogPost>
     </xsl:template>
 
     <xsl:template mode="link" match="item">
