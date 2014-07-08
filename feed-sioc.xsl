@@ -40,7 +40,6 @@
     xmlns:rss="http://purl.org/rss/1.0/"
     xmlns:atom="http://purl.org/atom/ns#"
     xmlns:atom1="http://www.w3.org/2005/Atom"
-    xmlns:simple="http://my.netscape.com/rdf/simple/0.9/"
     xmlns:wp10="http://wordpress.org/export/1.0/"
     xmlns:wp12="http://wordpress.org/export/1.2/"
 
@@ -61,59 +60,7 @@
     <xsl:param name="wp_attachments"/>
 
     <xsl:template match="/">
-        <xsl:apply-templates select="/rdf:RDF"/>
         <xsl:apply-templates select="/rss[@version]/channel"/>
-        <xsl:apply-templates select="/redirect/newLocation"/>
-        <xsl:apply-templates select="/atom:feed[@version='0.3']"/>
-        <xsl:apply-templates select="/atom1:feed"/>
-    </xsl:template>
-
-    <xsl:template match="/redirect/newLocation">
-        <!-- TODO set xml:base -->
-        <rdf:RDF>
-            <xsl:apply-templates mode="version" select="."/>
-            <rdf:Description rdf:about="{$rss}">
-                <dc:isReplacedBy rdf:resource="{normalize-space(.)}"/>
-            </rdf:Description>
-        </rdf:RDF>
-    </xsl:template>
-
-    <xsl:template match="/atom:feed|/atom1:feed">
-        <xsl:variable name="link" select="atom1:link[@rel='alternate' and @type='text/html' and @href]/@href" />
-        <xsl:variable name="feedBase" select="mf:normalize-slashs($link)" />
-        <rdf:RDF xml:base="{$feedBase}">
-            <xsl:copy-of select="@xml:lang|@xml:base"/>
-            <xsl:apply-templates mode="version" select="."/>
-            <sioct:Weblog rdf:about="{$link}">
-                <xsl:apply-templates select="*"/>
-                <xsl:apply-templates select="@xml:lang"/>
-                <xsl:for-each select="atom:entry|atom1:entry">
-                    <sioc:container_of>
-                        <sioct:BlogPost rdf:about="{atom:link[@rel='alternate']/@href}{atom1:id}"/>
-                    </sioc:container_of>
-                </xsl:for-each>
-            </sioct:Weblog>
-            <xsl:apply-templates mode="item" select="atom:entry|atom1:entry"/>
-        </rdf:RDF>
-    </xsl:template>
-
-    <xsl:template mode="item" match="atom:entry|atom1:entry">
-        <sioct:BlogPost rdf:about="{atom:link[@rel='alternate']/@href}{atom1:id}">
-            <xsl:copy-of select="@xml:lang|@xml:base"/>
-            <xsl:apply-templates select="*"/>
-            <xsl:apply-templates select="@xml:lang"/>
-        </sioct:BlogPost>
-    </xsl:template>
-
-    <xsl:template match="/rdf:RDF">
-        <xsl:copy-of select="."/>
-<!--//
-        <rdf:RDF>
-            <xsl:apply-templates mode="version" select="rss:channel|simple:channel"/>
-            <xsl:apply-templates mode="rss" select="*"/>
-            <xsl:apply-templates select="simple:*"/>
-        </rdf:RDF>
-//-->
     </xsl:template>
 
     <!-- Add a comment telling the source format -->
@@ -150,74 +97,6 @@
             </xsl:choose>
             <xsl:value-of select="'&quot; '"/>
         </xsl:comment>
-    </xsl:template>
-
-    <xsl:template mode="rss" match="rss:channel">
-        <sioct:Weblog rdf:about="">
-            <xsl:copy-of select="@*"/>
-            <xsl:apply-templates mode="rss" select="node()|text()|comment()"/>
-        </sioct:Weblog>
-    </xsl:template>
-
-    <xsl:template mode="rss" match="*">
-        <xsl:copy>
-            <xsl:copy-of select="@*"/>
-            <xsl:apply-templates mode="rss" select="node()|text()|comment()"/>
-        </xsl:copy>
-    </xsl:template>
-
-    <xsl:template mode="rss" match="rdf:li">
-        <sioct:BlogPost rdf:about="{concat(@resource,@rdf:resource)}"/>
-    </xsl:template>
-
-    <xsl:template match="simple:channel">
-        <sioct:Weblog rdf:about="{simple:link}">
-<!--//
-            <xsl:if test="simple:link[@href]">
-                <xsl:attribute name="rdf:about">
-                    <xsl:value-of select="atom1:link[@rel='alternate' and @type='text/html' and @href]/@href"/>
-                </xsl:attribute>
-            </xsl:if>
-//-->
-            <xsl:apply-templates select="simple:title|simple:description|simple:link"/>
-            <xsl:for-each select="../simple:item[normalize-space(simple:link)!='']">
-                <sioc:container_of>
-
-                    <sioct:BlogPost rdf:about="{simple:link}"/>
-                </sioc:container_of>
-
-            </xsl:for-each>
-            <xsl:if test="../simple:image[normalize-space(simple:url)!='']">
-                <rss:image rdf:resource="{../simple:image[normalize-space(simple:url)!=''][1]/simple:url}"/>
-            </xsl:if>
-            <xsl:if test="../simple:textinput[normalize-space(simple:link)!='']">
-                <rss:textinput rdf:resource="{../simple:textinput[normalize-space(simple:link)!=''][1]/simple:link}"/>
-            </xsl:if>
-        </sioct:Weblog>
-    </xsl:template>
-
-    <xsl:template match="simple:item">
-        <xsl:if test="normalize-space(simple:link)!=''">
-            <sioct:BlogPost rdf:about="{simple:link}">
-                <xsl:apply-templates select="simple:title|simple:description|simple:link"/>
-            </sioct:BlogPost>
-        </xsl:if>
-    </xsl:template>
-
-    <xsl:template match="simple:image">
-        <xsl:if test="normalize-space(simple:url)!=''">
-            <rss:image rdf:about="{simple:url}">
-                <xsl:apply-templates select="simple:url|simple:link|simple:title|simple:description"/>
-            </rss:image>
-        </xsl:if>
-    </xsl:template>
-
-    <xsl:template match="simple:textinput">
-        <xsl:if test="normalize-space(simple:link)!=''">
-            <rss:textinput rdf:about="{simple:link}">
-                <xsl:apply-templates select="simple:name|simple:link|simple:title|simple:description"/>
-            </rss:textinput>
-        </xsl:if>
     </xsl:template>
 
     <xsl:template match="icbm:latitude">
@@ -699,20 +578,6 @@
             </xsl:if>
         </sioc:Container>
     </xsl:template>
-
-    <!--// we don't want this for wordpress to avoid duplicates
-    <xsl:template match="category">
-        <xsl:element name="dc:subject">
-            <xsl:value-of select="normalize-space(.)"/>
-        </xsl:element>
-
-        <xsl:element name="sioc:topic">
-            <skos:Concept>
-                <rdfs:label><xsl:value-of select="normalize-space(.)"/></rdfs:label>
-            </skos:Concept>
-        </xsl:element>
-    </xsl:template>
-    //-->
 
     <xsl:template match="pubDate|pubdate">
         <xsl:apply-templates mode="rfc2822-w3cdtf" select=".">
